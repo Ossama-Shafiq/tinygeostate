@@ -1,0 +1,4 @@
+{"id":"g001","model":"dummy","condition":"text","prediction":"right"}
+{"id":"g002","model":"dummy","condition":"text","prediction":"clockwise"}
+{"id":"g003","model":"dummy","condition":"text","prediction":"yes"}
+{"id":"g004","model":"dummy","condition":"text","prediction":"5.0"}
