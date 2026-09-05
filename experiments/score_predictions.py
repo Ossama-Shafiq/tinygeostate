@@ -5,9 +5,6 @@ from pathlib import Path
 from tinygeo.evaluation import score_prediction
 
 
-BENCHMARK_PATH = Path("benchmarks/basic.jsonl")
-
-
 def load_jsonl(path: Path):
     rows = []
 
@@ -25,14 +22,18 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
+        "--benchmark",
+        default="benchmarks/basic.jsonl",
+    )
+
+    parser.add_argument(
         "--predictions",
         required=True,
-        help="Path to predictions JSONL file.",
     )
 
     args = parser.parse_args()
 
-    benchmark = load_jsonl(BENCHMARK_PATH)
+    benchmark = load_jsonl(Path(args.benchmark))
     predictions = load_jsonl(Path(args.predictions))
 
     answers = {
@@ -73,8 +74,7 @@ def main():
     print(f"Correct: {correct}/{total}")
 
     if total:
-        accuracy = correct / total
-        print(f"Accuracy: {accuracy:.1%}")
+        print(f"Accuracy: {correct / total:.1%}")
 
 
 if __name__ == "__main__":

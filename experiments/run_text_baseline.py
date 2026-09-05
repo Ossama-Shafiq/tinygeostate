@@ -4,32 +4,33 @@ from pathlib import Path
 
 from tinygeo.evaluation import score_prediction
 from tinygeo.models.ollama_client import OllamaClient
-from tinygeo.parsing import extract_final_answer
-
-
-BENCHMARK_PATH = Path("benchmarks/basic.jsonl")
 
 
 SYSTEM_PROMPT = """
 You are being evaluated on elementary geometry.
 
-Solve the problem yourself.
+Solve the geometry problem carefully yourself.
 
 You do not have access to calculators, geometry tools,
 external programs, or persistent geometric state.
 
-At the end of your response, output exactly:
+Return only a JSON object containing your final answer.
 
-FINAL: <answer>
-
-Examples:
-
-FINAL: yes
-FINAL: right
-FINAL: 90
-
-Do not put anything after the FINAL line.
+The answer must be either "yes" or "no".
 """.strip()
+
+
+ANSWER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "answer": {
+            "type": "string",
+            "enum": ["yes", "no"],
+        }
+    },
+    "required": ["answer"],
+    "additionalProperties": False,
+}
 
 
 def load_jsonl(path: Path):
@@ -54,17 +55,54 @@ def main():
     )
 
     parser.add_argument(
+        "--benchmark",
+        default="benchmarks/compositional_v1.jsonl",
+    )
+
+    parser.add_argument(
         "--output",
-        default="results/text_baseline.jsonl",
+        default="results/text_baseline_structured.jsonl",
+    )
+
+    parser.add_argument(
+        "--num-predict",
+        type=int,
+        default=4096,
+        help="Maximum generated tokens, including model thinking.",
+    )
+
+    parser.add_argument(
+        "--only-id",
+        default=None,
+        help="Run only one benchmark problem ID.",
     )
 
     args = parser.parse_args()
 
-    benchmark = load_jsonl(BENCHMARK_PATH)
+    benchmark = load_jsonl(
+        Path(args.benchmark)
+    )
 
-    client = OllamaClient(args.model)
+    if args.only_id is not None:
+        benchmark = [
+            problem
+            for problem in benchmark
+            if problem["id"] == args.only_id
+        ]
+
+        if not benchmark:
+            raise ValueError(
+                f"Problem ID not found: {args.only_id}"
+            )
+
+    client = OllamaClient(
+        model=args.model,
+        think=True,
+        num_predict=args.num_predict,
+    )
 
     output_path = Path(args.output)
+
     output_path.parent.mkdir(
         parents=True,
         exist_ok=True,
@@ -87,32 +125,59 @@ def main():
             response = client.generate(
                 prompt=problem["prompt"],
                 system_prompt=SYSTEM_PROMPT,
+                response_format=ANSWER_SCHEMA,
             )
 
-            prediction = extract_final_answer(
-                response.text
+            try:
+                parsed = json.loads(response.text)
+                prediction = parsed["answer"]
+
+            except (
+                json.JSONDecodeError,
+                KeyError,
+                TypeError,
+            ):
+                prediction = None
+
+            hit_token_limit = (
+                response.completion_tokens is not None
+                and response.completion_tokens >= args.num_predict
             )
 
-            correct = False
+            truncated = (
+                response.done_reason == "length"
+                or (
+                    hit_token_limit
+                    and not response.text.strip()
+                )
+            )
 
-            if prediction is not None:
-                correct = score_prediction(
+            correct = (
+                prediction is not None
+                and score_prediction(
                     prediction,
                     problem["answer"],
                 )
+            )
 
             record = {
                 "id": problem["id"],
+                "base_id": problem.get("base_id"),
+                "variant": problem.get("variant"),
                 "model": client.name,
-                "condition": "text",
+                "condition": "text_structured",
                 "prediction": prediction,
                 "expected": problem["answer"],
                 "correct": correct,
                 "raw_response": response.text,
                 "prompt_tokens": response.prompt_tokens,
-                "completion_tokens": (
-                    response.completion_tokens
+                "completion_tokens": response.completion_tokens,
+                "thinking_chars": len(
+                    response.thinking or ""
                 ),
+                "done_reason": response.done_reason,
+                "truncated": truncated,
+                "num_predict": args.num_predict,
                 "tool_calls": 0,
             }
 
@@ -124,7 +189,10 @@ def main():
 
             print(
                 f"    prediction={prediction!r} "
-                f"correct={correct}"
+                f"correct={correct} "
+                f"tokens={response.completion_tokens} "
+                f"done_reason={response.done_reason!r} "
+                f"truncated={truncated}"
             )
 
 
