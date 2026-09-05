@@ -1,0 +1,10 @@
+{"id":"g001","prompt":"A=(0,0), B=(4,0), C=(0,3). Is angle BAC acute, right, or obtuse?","answer":"right"}
+{"id":"g002","prompt":"A=(0,0), B=(3,0), C=(1,2). Is C clockwise, counterclockwise, or collinear relative to directed line AB?","answer":"counterclockwise"}
+{"id":"g003","prompt":"A=(0,0), B=(5,0), C=(2,-3), D=(2,4). Is line AB perpendicular to line CD?","answer":"yes"}
+{"id":"g004","prompt":"A=(0,0), B=(3,4). What is the distance AB?","answer":"5"}
+{"id":"g005","prompt":"A=(0,0), B=(1,1), C=(2,2). Are A, B, and C collinear?","answer":"yes"}
+{"id":"g006","prompt":"A=(0,0), B=(4,0), C=(2,0). Are A, B, and C collinear?","answer":"yes"}
+{"id":"g007","prompt":"A=(0,0), B=(0,4), C=(3,0). What is angle BAC in degrees?","answer":"90"}
+{"id":"g008","prompt":"Line L1 passes through (0,0) and (5,0). Line L2 passes through (0,2) and (5,2). Are L1 and L2 parallel?","answer":"yes"}
+{"id":"g009","prompt":"A=(0,0), B=(2,0), C=(1,-1). Is C clockwise, counterclockwise, or collinear relative to directed line AB?","answer":"clockwise"}
+{"id":"g010","prompt":"A=(0,0), B=(6,8). What is the distance AB?","answer":"10"}
