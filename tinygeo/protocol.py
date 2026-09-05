@@ -7,6 +7,15 @@ def execute(
     geo: GeometryState,
     action: Dict[str, Any],
 ) -> Dict[str, Any]:
+    """
+    Execute one structured action against GeometryState.
+
+    The protocol deliberately exposes only primitive
+    geometric operations and constructions.
+
+    It does NOT expose theorem proving or automatic
+    problem solving.
+    """
 
     try:
         op = action["op"]
@@ -23,6 +32,20 @@ def execute(
                 action["name"],
                 action["p1"],
                 action["p2"],
+            )
+
+        elif op == "create_midpoint":
+            result = geo.create_midpoint(
+                action["name"],
+                action["a"],
+                action["b"],
+            )
+
+        elif op == "create_intersection":
+            result = geo.create_intersection(
+                action["name"],
+                action["line1"],
+                action["line2"],
             )
 
         elif op == "distance":
@@ -70,7 +93,9 @@ def execute(
         else:
             return {
                 "ok": False,
-                "error": f"Unknown operation: {op}",
+                "error": (
+                    f"Unknown operation: {op}"
+                ),
             }
 
         return {
@@ -78,7 +103,11 @@ def execute(
             "result": result,
         }
 
-    except (KeyError, TypeError, ValueError) as exc:
+    except (
+        KeyError,
+        TypeError,
+        ValueError,
+    ) as exc:
         return {
             "ok": False,
             "error": str(exc),
