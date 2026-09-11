@@ -8,7 +8,7 @@ from tinygeo.geometry import GeometryState
 
 
 OUTPUT_PATH = Path(
-    "benchmarks/compositional_v2.jsonl"
+    "benchmarks/compositional_v2_1.jsonl"
 )
 
 POINT_LABELS = [
@@ -868,8 +868,8 @@ def describe_operation(
         return (
             f"Construct point "
             f"{operation['name']} "
-            f"as the midpoint of "
-            f"{operation['a']}"
+            f"as the midpoint of points "
+            f"{operation['a']} and "
             f"{operation['b']}."
         )
 
@@ -949,18 +949,18 @@ def describe_predicate(
 
     if kind == "distance_eq":
         return (
-            f"distance "
-            f"{points[0]}{points[1]} "
-            f"equals distance "
-            f"{points[2]}{points[3]}"
+            f"the distance between points "
+            f"{points[0]} and {points[1]} "
+            f"equals the distance between points "
+            f"{points[2]} and {points[3]}"
         )
 
     if kind == "distance_lt":
         return (
-            f"distance "
-            f"{points[0]}{points[1]} "
-            f"is less than distance "
-            f"{points[2]}{points[3]}"
+            f"the distance between points "
+            f"{points[0]} and {points[1]} "
+            f"is less than the distance between points "
+            f"{points[2]} and {points[3]}"
         )
 
     raise ValueError(kind)

@@ -25,6 +25,7 @@ class OllamaClient:
         messages: list[dict[str, Any]],
         response_format: Optional[Any] = None,
         num_predict: Optional[int] = None,
+        tools: Optional[list[dict[str, Any]]] = None,
     ) -> ModelResponse:
 
         generation_limit = (
@@ -46,6 +47,9 @@ class OllamaClient:
 
         if response_format is not None:
             payload["format"] = response_format
+
+        if tools is not None:
+            payload["tools"] = tools
 
         data = json.dumps(
             payload
@@ -79,22 +83,12 @@ class OllamaClient:
         message = body["message"]
 
         return ModelResponse(
-            text=message.get(
-                "content",
-                "",
-            ),
-            thinking=message.get(
-                "thinking"
-            ),
-            prompt_tokens=body.get(
-                "prompt_eval_count"
-            ),
-            completion_tokens=body.get(
-                "eval_count"
-            ),
-            done_reason=body.get(
-                "done_reason"
-            ),
+            text=message.get("content", ""),
+            thinking=message.get("thinking"),
+            tool_calls=message.get("tool_calls", []),
+            prompt_tokens=body.get("prompt_eval_count"),
+            completion_tokens=body.get("eval_count"),
+            done_reason=body.get("done_reason"),
         )
 
     def chat(
@@ -102,12 +96,14 @@ class OllamaClient:
         messages: list[dict[str, Any]],
         response_format: Optional[Any] = None,
         num_predict: Optional[int] = None,
+        tools: Optional[list[dict[str, Any]]] = None,
     ) -> ModelResponse:
 
         return self._request(
             messages=messages,
             response_format=response_format,
             num_predict=num_predict,
+            tools=tools,
         )
 
     def generate(

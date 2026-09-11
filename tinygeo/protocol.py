@@ -54,6 +54,22 @@ def execute(
                 action["b"],
             )
 
+        elif op == "distance_equal":
+            result = geo.distance_equal(
+                action["a"],
+                action["b"],
+                action["c"],
+                action["d"],
+            )
+
+        elif op == "distance_less_than":
+            result = geo.distance_less_than(
+                action["a"],
+                action["b"],
+                action["c"],
+                action["d"],
+            )
+
         elif op == "angle":
             result = geo.angle(
                 action["a"],
@@ -73,6 +89,12 @@ def execute(
                 action["a"],
                 action["b"],
                 action["c"],
+            )
+
+        elif op == "point_on_line":
+            result = geo.point_on_line(
+                action["point"],
+                action["line"],
             )
 
         elif op == "parallel":

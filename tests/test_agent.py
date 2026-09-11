@@ -1,5 +1,3 @@
-import json
-
 from tinygeo.agent import (
     run_geometry_agent,
 )
@@ -9,77 +7,102 @@ from tinygeo.models.base import (
 )
 
 
+def tool_call(
+    name,
+    arguments,
+):
+    return {
+        "function": {
+            "name": name,
+            "arguments": arguments,
+        }
+    }
+
+
 class ScriptedClient:
     def __init__(
         self,
-        decisions,
+        responses,
     ):
-        self.decisions = list(
-            decisions
+        self.responses = list(
+            responses
         )
 
-        self.name = "scripted-test-model"
+        self.name = (
+            "scripted-test-model"
+        )
 
     def chat(
         self,
         messages,
         response_format=None,
         num_predict=None,
+        tools=None,
     ):
-        decision = self.decisions.pop(
+        return self.responses.pop(
             0
-        )
-
-        return ModelResponse(
-            text=json.dumps(
-                decision
-            ),
-            thinking="",
-            prompt_tokens=10,
-            completion_tokens=5,
-            done_reason="stop",
         )
 
 
 SCRIPT = [
-    {
-        "type": "tool",
-        "op": "create_point",
-        "args": {
-            "name": "A",
-            "x": 0,
-            "y": 0,
-        },
-        "answer": "",
-    },
+    ModelResponse(
+        text="",
+        thinking="",
+        tool_calls=[
+            tool_call(
+                "create_point",
+                {
+                    "name": "A",
+                    "x": 0,
+                    "y": 0,
+                },
+            ),
+            tool_call(
+                "create_point",
+                {
+                    "name": "B",
+                    "x": 3,
+                    "y": 4,
+                },
+            ),
+        ],
+        prompt_tokens=10,
+        completion_tokens=5,
+        done_reason="stop",
+    ),
 
-    {
-        "type": "tool",
-        "op": "create_point",
-        "args": {
-            "name": "B",
-            "x": 3,
-            "y": 4,
-        },
-        "answer": "",
-    },
+    ModelResponse(
+        text="",
+        thinking="",
+        tool_calls=[
+            tool_call(
+                "distance",
+                {
+                    "a": "A",
+                    "b": "B",
+                },
+            )
+        ],
+        prompt_tokens=10,
+        completion_tokens=5,
+        done_reason="stop",
+    ),
 
-    {
-        "type": "tool",
-        "op": "distance",
-        "args": {
-            "a": "A",
-            "b": "B",
-        },
-        "answer": "",
-    },
-
-    {
-        "type": "final",
-        "op": "",
-        "args": {},
-        "answer": "yes",
-    },
+    ModelResponse(
+        text="",
+        thinking="",
+        tool_calls=[
+            tool_call(
+                "submit_answer",
+                {
+                    "answer": "yes",
+                },
+            )
+        ],
+        prompt_tokens=10,
+        completion_tokens=5,
+        done_reason="stop",
+    ),
 ]
 
 

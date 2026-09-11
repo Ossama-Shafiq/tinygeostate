@@ -237,3 +237,104 @@ def test_line_intersection():
         geo.points["X"].y
         == pytest.approx(2.0)
     )
+
+def test_point_on_line():
+    geo = GeometryState()
+
+    geo.create_point(
+        "A",
+        0,
+        0,
+    )
+
+    geo.create_point(
+        "B",
+        4,
+        4,
+    )
+
+    geo.create_point(
+        "X",
+        2,
+        2,
+    )
+
+    geo.create_line(
+        "L1",
+        "A",
+        "B",
+    )
+
+    assert geo.point_on_line(
+        "X",
+        "L1",
+    )
+
+def test_distance_equal():
+    geo = GeometryState()
+
+    geo.create_point(
+        "A",
+        0,
+        0,
+    )
+
+    geo.create_point(
+        "B",
+        3,
+        4,
+    )
+
+    geo.create_point(
+        "C",
+        10,
+        0,
+    )
+
+    geo.create_point(
+        "D",
+        13,
+        4,
+    )
+
+    assert geo.distance_equal(
+        "A",
+        "B",
+        "C",
+        "D",
+    )
+
+
+def test_distance_less_than():
+    geo = GeometryState()
+
+    geo.create_point(
+        "A",
+        0,
+        0,
+    )
+
+    geo.create_point(
+        "B",
+        1,
+        0,
+    )
+
+    geo.create_point(
+        "C",
+        0,
+        0,
+    )
+
+    geo.create_point(
+        "D",
+        4,
+        0,
+    )
+
+    assert geo.distance_less_than(
+        "A",
+        "B",
+        "C",
+        "D",
+    )

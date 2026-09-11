@@ -200,6 +200,41 @@ class GeometryState:
             q.y - p.y,
         )
 
+    def distance_equal(
+        self,
+        a: str,
+        b: str,
+        c: str,
+        d: str,
+    ) -> bool:
+        """
+        Return whether distances AB and CD are equal
+        within numerical tolerance.
+        """
+
+        return abs(
+            self.distance(a, b)
+            - self.distance(c, d)
+        ) < EPS
+
+
+    def distance_less_than(
+        self,
+        a: str,
+        b: str,
+        c: str,
+        d: str,
+    ) -> bool:
+        """
+        Return whether distance AB is strictly less
+        than distance CD.
+        """
+
+        return (
+            self.distance(a, b)
+            < self.distance(c, d) - EPS
+        )
+
     def orientation(
         self,
         a: str,
@@ -237,6 +272,24 @@ class GeometryState:
         return (
             self.orientation(a, b, c)
             == "collinear"
+        )
+
+    def point_on_line(
+        self,
+        point: str,
+        line: str,
+    ) -> bool:
+        """
+        Return whether a point lies on an existing line.
+        """
+
+        self._require_point(point)
+        existing_line = self._require_line(line)
+
+        return self.collinear(
+            existing_line.p1,
+            existing_line.p2,
+            point,
         )
 
     def angle(

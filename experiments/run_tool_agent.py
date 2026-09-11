@@ -80,7 +80,7 @@ def main():
     parser.add_argument(
         "--step-token-cap",
         type=int,
-        default=2048,
+        default=4096,
     )
 
     parser.add_argument(
