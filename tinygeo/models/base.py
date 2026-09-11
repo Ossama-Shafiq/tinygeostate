@@ -19,5 +19,14 @@ class ModelClient(Protocol):
         prompt: str,
         system_prompt: str = "",
         response_format: Optional[Any] = None,
+        num_predict: Optional[int] = None,
+    ) -> ModelResponse:
+        ...
+
+    def chat(
+        self,
+        messages: list[dict[str, Any]],
+        response_format: Optional[Any] = None,
+        num_predict: Optional[int] = None,
     ) -> ModelResponse:
         ...

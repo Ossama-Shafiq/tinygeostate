@@ -12,37 +12,25 @@ class OllamaClient:
         model: str,
         host: str = "http://localhost:11434",
         think: bool = True,
-        num_predict: int = 4096,
+        num_predict: int = 8192,
     ):
         self.model = model
         self.host = host.rstrip("/")
         self.think = think
         self.num_predict = num_predict
-
         self.name = f"ollama/{model}"
 
-    def generate(
+    def _request(
         self,
-        prompt: str,
-        system_prompt: str = "",
+        messages: list[dict[str, Any]],
         response_format: Optional[Any] = None,
+        num_predict: Optional[int] = None,
     ) -> ModelResponse:
 
-        messages = []
-
-        if system_prompt:
-            messages.append(
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                }
-            )
-
-        messages.append(
-            {
-                "role": "user",
-                "content": prompt,
-            }
+        generation_limit = (
+            self.num_predict
+            if num_predict is None
+            else num_predict
         )
 
         payload = {
@@ -52,14 +40,16 @@ class OllamaClient:
             "think": self.think,
             "options": {
                 "temperature": 0,
-                "num_predict": self.num_predict,
+                "num_predict": generation_limit,
             },
         }
 
         if response_format is not None:
             payload["format"] = response_format
 
-        data = json.dumps(payload).encode("utf-8")
+        data = json.dumps(
+            payload
+        ).encode("utf-8")
 
         request = urllib.request.Request(
             f"{self.host}/api/chat",
@@ -89,9 +79,64 @@ class OllamaClient:
         message = body["message"]
 
         return ModelResponse(
-            text=message.get("content", ""),
-            thinking=message.get("thinking"),
-            prompt_tokens=body.get("prompt_eval_count"),
-            completion_tokens=body.get("eval_count"),
-            done_reason=body.get("done_reason"),
+            text=message.get(
+                "content",
+                "",
+            ),
+            thinking=message.get(
+                "thinking"
+            ),
+            prompt_tokens=body.get(
+                "prompt_eval_count"
+            ),
+            completion_tokens=body.get(
+                "eval_count"
+            ),
+            done_reason=body.get(
+                "done_reason"
+            ),
+        )
+
+    def chat(
+        self,
+        messages: list[dict[str, Any]],
+        response_format: Optional[Any] = None,
+        num_predict: Optional[int] = None,
+    ) -> ModelResponse:
+
+        return self._request(
+            messages=messages,
+            response_format=response_format,
+            num_predict=num_predict,
+        )
+
+    def generate(
+        self,
+        prompt: str,
+        system_prompt: str = "",
+        response_format: Optional[Any] = None,
+        num_predict: Optional[int] = None,
+    ) -> ModelResponse:
+
+        messages = []
+
+        if system_prompt:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                }
+            )
+
+        messages.append(
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        )
+
+        return self.chat(
+            messages=messages,
+            response_format=response_format,
+            num_predict=num_predict,
         )
