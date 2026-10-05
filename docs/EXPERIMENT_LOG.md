@@ -542,6 +542,182 @@ The run should not be selectively repeated until the missing answer becomes corr
 
 ---
 
+---
+
+# 18. Full v2.1 Persistent vs Serialized Phased Run
+
+Configuration:
+
+- Model: Qwen3-4B
+- Runtime: Ollama
+- Thinking: enabled
+- Temperature: 0
+- Step generation cap: 2048
+- Benchmark: `compositional_v2_1.jsonl`
+- Problems: 56 per condition
+
+## Persistent-state results
+
+- Final accuracy: 56/56 (100.0%)
+- Valid final answers: 56/56 (100.0%)
+- Construction success: 56/56 (100.0%)
+- Predicate validity: 224/224 (100.0%)
+- Predicate accuracy: 224/224 (100.0%)
+- Tool errors: 0
+- Mean prompt tokens: 7009.8
+- Median prompt tokens: 6916.0
+- Mean completion tokens: 5944.9
+- Median completion tokens: 5630.0
+- Mean thinking characters: 21540.8
+- Median thinking characters: 20475.5
+- Mean serialized-state characters: 0.0
+
+## Serialized-state results
+
+- Final accuracy: 54/56 (96.4%)
+- Valid final answers: 54/56 (96.4%)
+- Construction success: 54/56 (96.4%)
+- Predicate validity: 216/224 (96.4%)
+- Predicate accuracy: 216/224 (96.4%)
+- Tool errors reported by the current runner: 2
+- Mean prompt tokens: 8756.4
+- Median prompt tokens: 8862.0
+- Mean completion tokens: 6232.8
+- Median completion tokens: 6368.0
+- Mean thinking characters: 21966.8
+- Median thinking characters: 22481.5
+- Mean serialized-state characters: 3022.9
+- Median serialized-state characters: 3089.0
+- Mean peak serialized-state characters: 284.7
+
+## Paired comparison
+
+- Persistent-only correct: 2
+- Serialized-only correct: 0
+- Same correctness outcome: 54
+- Mean serialized minus persistent prompt tokens: +1746.7
+- Median serialized minus persistent prompt tokens: +1947.5
+- Mean serialized minus persistent completion tokens: +287.9
+- Median serialized minus persistent completion tokens: +362.5
+- Mean serialized minus persistent thinking characters: +426.1
+- Mean serialized minus persistent state characters: +3022.9
+- Serialized mean prompt-token overhead: +24.9%
+
+## Failure inspection
+
+The two failed serialized benchmark rows were:
+
+- `d01a_rotated53`
+- `d01b_rotated53`
+
+These two rows share the same construction trajectory. They therefore represent one unique construction failure replicated across two paired benchmark rows rather than two independent failures.
+
+Both rows failed at the identical construction step:
+
+```text
+Create point X as the intersection of lines L1 and L2.
+```
+
+The model selected the correct tool:
+
+```text
+create_intersection
+```
+
+but emitted the arguments:
+
+```json
+{
+  "line1": "L1",
+  "line2": "L2"
+}
+```
+
+and omitted the required argument:
+
+```json
+"name": "X"
+```
+
+TinyGeo then returned:
+
+```text
+'name'
+```
+
+The current runner classified this as a `tool_error`, but inspection shows that the more precise category is:
+
+```text
+missing_required_tool_argument
+```
+
+This is therefore not a demonstrated semantic geometry error.
+
+The model understood which geometric operation to perform and which lines to intersect, but failed to supply the required name of the newly constructed point.
+
+## Predicate interpretation
+
+The serialized condition reports:
+
+```text
+Predicate validity: 216/224
+Predicate accuracy: 216/224
+```
+
+The eight missing predicate evaluations correspond exactly to the two failed construction rows:
+
+```text
+2 failed construction rows × 4 predicates = 8 unevaluated predicates
+```
+
+No predicate error was observed after a successful construction.
+
+Therefore, the current evidence does not show a difference in primitive predicate reasoning accuracy once a valid world has been constructed.
+
+## Interpretation
+
+The clearest aggregate result from v2.1 is the increased context-processing burden of serialized state.
+
+Under the same phased protocol, model, tool set, benchmark, and per-step generation budget, the serialized condition required:
+
+```text
+24.9% more mean prompt tokens
+```
+
+than the persistent condition.
+
+Persistent state achieved 56/56 correct benchmark rows, while serialized state achieved 54/56. However, the two failed serialized rows arose from one shared malformed construction-tool event, so this accuracy difference should not yet be interpreted as strong statistical evidence of a general reliability advantage.
+
+The current evidence supports the more conservative conclusion:
+
+> External persistent geometric state substantially reduces repeated token-context burden while preserving at least equivalent task performance under a matched primitive-tool protocol.
+
+There is also a preliminary reliability signal:
+
+> One unique serialized construction trajectory produced a missing-required-argument failure, while no corresponding failure occurred under persistent state.
+
+This reliability observation requires larger and more varied benchmarks before stronger claims can be made.
+
+## Experimental status
+
+The v2.1 benchmark and these result files should now remain frozen.
+
+Do not selectively rerun the failed serialized examples and replace their results.
+
+Future code should improve the failure taxonomy so malformed or incomplete tool arguments are distinguished from genuine geometry-execution failures.
+
+The next benchmark should investigate controlled scaling in:
+
+- geometric world size
+- number of persistent objects
+- construction depth
+- amount of serialized state
+- representation transformations
+
+This will test whether the prompt/context overhead observed here increases systematically as geometric worlds become larger.
+
+---
+
 # Current Status
 
 v1:
@@ -553,24 +729,37 @@ saturated
 v2.1:
 
 ```text
+frozen
 near semantic ceiling
-useful for validating infrastructure
+full persistent-vs-serialized phased run completed
 ```
 
 Persistent and serialized phased pipelines:
 
 ```text
-operational on pilot examples
+operational across the full v2.1 benchmark
 ```
 
-Next experiment:
+Current aggregate result:
 
 ```text
-Run the complete v2.1 phased benchmark
-under persistent and serialized conditions.
+persistent_state: 56/56 correct
+serialized_state: 54/56 correct
+
+serialized mean prompt-token overhead: +24.9%
+
+the two serialized row failures came from one shared
+missing-required-tool-argument event during construction
 ```
 
-After that:
+Next engineering step:
+
+```text
+Improve failure taxonomy so malformed/incomplete tool arguments
+are separated from genuine geometry-execution failures.
+```
+
+Next benchmark:
 
 ```text
 Design v3 around controlled geometric world-size

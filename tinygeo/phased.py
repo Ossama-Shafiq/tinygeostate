@@ -58,6 +58,36 @@ QUERY_TOOLS = select_tools(
     QUERY_TOOL_NAMES
 )
 
+REQUIRED_ARGUMENTS_BY_TOOL = {
+    tool["function"]["name"]: set(
+        tool["function"]
+        ["parameters"]
+        .get("required", [])
+    )
+    for tool in GEOMETRY_TOOLS
+}
+
+
+def missing_required_arguments(
+    tool_name: str,
+    arguments: dict[str, Any],
+) -> list[str]:
+    required = (
+        REQUIRED_ARGUMENTS_BY_TOOL
+        .get(
+            tool_name,
+            set(),
+        )
+    )
+
+    supplied = set(
+        arguments
+    )
+
+    return sorted(
+        required - supplied
+    )
+
 
 def format_number(
     value,
@@ -574,6 +604,26 @@ def run_construction(
             details.append(detail)
             break
 
+        missing_arguments = (
+            missing_required_arguments(
+                tool_name,
+                arguments,
+            )
+        )
+
+        if missing_arguments:
+            status = (
+                "missing_required_argument"
+            )
+
+            detail[
+                "missing_arguments"
+            ] = missing_arguments
+
+            detail["status"] = status
+            details.append(detail)
+            break
+
         action = {
             "op": tool_name,
             **arguments,
@@ -773,6 +823,27 @@ def run_predicate(
         result["status"] = (
             "wrong_tool_selection"
         )
+
+        return (
+            result,
+            serialized_state,
+        )
+
+    missing_arguments = (
+        missing_required_arguments(
+            tool_name,
+            arguments,
+        )
+    )
+
+    if missing_arguments:
+        result["status"] = (
+            "missing_required_argument"
+        )
+
+        result[
+            "missing_arguments"
+        ] = missing_arguments
 
         return (
             result,
