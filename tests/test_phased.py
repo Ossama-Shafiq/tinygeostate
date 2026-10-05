@@ -246,73 +246,73 @@ def test_serialized_phased_problem():
         > 0
     )
 
-    def test_missing_required_argument_is_classified():
-        problem = {
-            "id": "missing-argument-test",
-            "answer": "yes",
+def test_missing_required_argument_is_classified():
+    problem = {
+        "id": "missing-argument-test",
+        "answer": "yes",
 
-            "initial_points": {
-                "A": [0, 0],
+        "initial_points": {
+            "A": [0, 0],
+        },
+
+        "operations": [],
+
+        "predicates": [],
+
+        "predicate_results": [],
+
+        "final_state": {
+            "points": {
+                "A": {
+                    "x": 0.0,
+                    "y": 0.0,
+                }
             },
+            "lines": {},
+        },
+    }
 
-            "operations": [],
-
-            "predicates": [],
-
-            "predicate_results": [],
-
-            "final_state": {
-                "points": {
-                    "A": {
-                        "x": 0.0,
-                        "y": 0.0,
-                    }
+    client = ScriptedClient(
+        [
+            response(
+                "create_point",
+                {
+                    "x": 0,
+                    "y": 0,
                 },
-                "lines": {},
-            },
-        }
+            )
+        ]
+    )
 
-        client = ScriptedClient(
-            [
-                response(
-                    "create_point",
-                    {
-                        "x": 0,
-                        "y": 0,
-                    },
-                )
-            ]
-        )
+    result = run_phased_problem(
+        client=client,
+        problem=problem,
+        condition="persistent_state",
+        step_token_cap=2048,
+    )
 
-        result = run_phased_problem(
-            client=client,
-            problem=problem,
-            condition="persistent_state",
-            step_token_cap=2048,
-        )
+    assert (
+        result[
+            "construction_status"
+        ]
+        == "missing_required_argument"
+    )
 
-        assert (
-            result[
-                "construction_status"
-            ]
-            == "missing_required_argument"
-        )
+    assert (
+        result[
+            "construction_steps_successful"
+        ]
+        == 0
+    )
 
-        assert (
-            result[
-                "construction_steps_successful"
-            ]
-            == 0
-        )
+    assert (
+        result["tool_errors"]
+        == 0
+    )
 
-        assert (
-            result["tool_errors"]
-            == 0
-        )
-
-        assert (
-            result[
-                "construction_details"
-            ][0]["missing_arguments"]
-            == ["name"]
-        )
+    assert (
+        result[
+            "construction_details"
+        ][0]["missing_arguments"]
+        == ["name"]
+    )
